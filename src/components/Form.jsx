@@ -5,11 +5,17 @@ import "./Form.css";
 function Form({ onGastoAgregado }) {
   const [descripcion, setDescripcion] = useState("");
   const [monto, setMonto] = useState("");
+  const [error, setError] = useState(null);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (!descripcion.trim() || !monto) return;
+    if (!descripcion.trim() || !monto) {
+      setError("Por favor, complete todos los campos.");
+      return;
+    }
+
+    setError(null);
 
     const nuevoGasto = {
       descripcion: descripcion.trim(),
@@ -17,7 +23,7 @@ function Form({ onGastoAgregado }) {
       fecha: new Date().toISOString(),
     };
 
-    await agregarGasto(nuevoGasto);
+    agregarGasto(nuevoGasto);
 
     setDescripcion("");
     setMonto("");
@@ -53,6 +59,8 @@ function Form({ onGastoAgregado }) {
       </div>
 
       <button type="submit">Agregar Gasto</button>
+
+      {error && <p className="error">{error}</p>}
     </form>
   );
 }

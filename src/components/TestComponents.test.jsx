@@ -1,160 +1,85 @@
 /* eslint-env jest */
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import Form from "./Form";
 import ListaGastos from "./ListaGastos";
-import { agregarGasto, obtenerData, eliminarGasto } from "../services";
+import { agregarGasto, obtenerGastos } from "../services";
 
 // Mock de los servicios
 jest.mock("../services");
 
-const gastosMock = [
-  { fecha: "01/11/2025", nombre: "Pan", cantidad: 2, precio: 10 },
-  { fecha: "02/11/2025", nombre: "Leche", cantidad: 1, precio: 15 },
-];
+describe("Form Component - Tests Básicos", () => {
 
-const agregarGastoMock = (nuevoGasto) => {
-  gastosMock.push(nuevoGasto);
-};
-
-const deleteGastoMock = (index) => {
-  gastosMock.splice(index, 1);
-};
-
-describe("Form Component", () => {
-  test("renderiza correctamente el formulario", () => {
-    render(<Form />);
-    expect(screen.getByLabelText(/descripción/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/monto/i)).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /agregar gasto/i })
-    ).toBeInTheDocument();
-  });
-
-  test("actualiza el estado al escribir en los inputs", () => {
-    render(<Form />);
-    const inputDescripcion = screen.getByLabelText(/descripción/i);
-    const inputMonto = screen.getByLabelText(/monto/i);
-
-    fireEvent.change(inputDescripcion, { target: { value: "Compra test" } });
-    fireEvent.change(inputMonto, { target: { value: "100" } });
-
-    expect(inputDescripcion.value).toBe("Compra test");
-    expect(inputMonto.value).toBe("100");
-  });
-
-  test("llama a agregarGasto al enviar el formulario", async () => {
-    agregarGasto.mockResolvedValue({});
+  test("no envía el formulario si descripción está vacía", () => {
+    agregarGasto.mockImplementation(() => {});
     const mockCallback = jest.fn();
 
     render(<Form onGastoAgregado={mockCallback} />);
 
-    fireEvent.change(screen.getByLabelText(/descripción/i), {
-      target: { value: "Test" },
-    });
-    fireEvent.change(screen.getByLabelText(/monto/i), {
-      target: { value: "50" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: /agregar gasto/i }));
+    // Solo llenar monto, dejar descripción vacía
+    fireEvent.change(screen.getByLabelText("Monto:"), { target: { value: "100" } });
+    fireEvent.click(screen.getByRole("button", { name: "Agregar Gasto" }));
 
-    await waitFor(() => {
-      expect(agregarGasto).toHaveBeenCalledWith(
-        expect.objectContaining({
-          descripcion: "Test",
-          monto: 50,
-        })
-      );
-    });
+    // No debe llamar a agregarGasto ni al callback
+    expect(agregarGasto).not.toHaveBeenCalled();
+    expect(mockCallback).not.toHaveBeenCalled();
+
+    //Se muestra el mensaje de error
+    expect(screen.getByText("Por favor, complete todos los campos.")).toBeInTheDocument();
+  });
+
+  test("carga correctamente los datos del formulario", () => {
+    render(<Form />);
+
+    const inputDescripcion = screen.getByLabelText("Descripción:");
+    const inputMonto = screen.getByLabelText("Monto:");
+
+    // Escribir valores
+    fireEvent.change(inputDescripcion, { target: { value: "Supermercado" } });
+    fireEvent.change(inputMonto, { target: { value: "250.50" } });
+
+    // Verificar que los inputs tienen los valores correctos
+    expect(inputDescripcion.value).toBe("Supermercado");
+    expect(inputMonto.value).toBe("250.50");
+  });
+
+  test("el input monto solo recibe números", () => {
+    render(<Form />);
+
+    const inputMonto = screen.getByLabelText("Monto:");
+
+    // Le pasamos un valor no numérico, debería no escribirlo
+    fireEvent.change(inputMonto, { target: { value: "test" } });
+
+    // Verificar que el input es de tipo number
+    expect(inputMonto).toHaveAttribute("type", "number");
+    expect(inputMonto).toHaveAttribute("step", "0.01");
+    expect(inputMonto.value).toBe("");
   });
 });
 
-describe("Componente Tabla", () => {
-  test("renderiza la tabla correctamente", () => {
-    render(<ListaGastos gastos={[]} />);
-    expect(screen.getByText("Fecha")).toBeInTheDocument();
-    expect(screen.getByText("Nombre")).toBeInTheDocument();
-    expect(screen.getByText("Cantidad")).toBeInTheDocument();
-    expect(screen.getByText("Precio")).toBeInTheDocument();
-  });
+describe("ListaGastos Component - Test de grabación", () => {
 
-  test("muestra los gastos en la tabla", () => {
-    render(<ListaGastos gastos={gastosMock} />);
-    expect(screen.getByText("Pan")).toBeInTheDocument();
-    expect(screen.getByText("Leche")).toBeInTheDocument();
-    expect(screen.getByText("2")).toBeInTheDocument();
-    expect(screen.getByText("15")).toBeInTheDocument();
-  });
-
-  test("Agrega un nuevo gasto, espera que sean 3 gastos", () => {
-    const gasto = {
-      fecha: "01/11/2025",
-      nombre: "Huevo",
-      cantidad: 2,
-      precio: 10,
+  test("Cargo un gasto y se renderiza",()=>{
+    const gastoGuardado = {
+      id: 1,
+      descripcion: "Café",
+      monto: 50,
+      fecha: new Date().toISOString(),
     };
-    agregarGastoMock(gasto);
-    render(<ListaGastos gastos={gastosMock} />);
+    obtenerGastos.mockReturnValue([gastoGuardado]);
+    render(<ListaGastos refresh={0} />);
+    expect(screen.getByText("Café")).toBeInTheDocument();
+    expect(screen.getByText("$50.00")).toBeInTheDocument();
+  })
 
-    expect(screen.getAllByRole("row")).toHaveLength(4); // 3 gastos + 1 header
-  });
-
-  test("renderiza correctamente cuando no hay gastos", () => {
-    render(<ListaGastos gastos={[]} />);
-    expect(screen.getByText("Fecha")).toBeInTheDocument();
-    expect(screen.queryByText("Pan")).not.toBeInTheDocument();
-  });
-
-  test("Calcula el total de los gastos: 35", () => {
-    render(<ListaGastos gastos={gastosMock} />);
-    const total = gastosMock.reduce((acc, gasto) => acc + gasto.precio, 0);
-    expect(screen.getByText(`Total gastos: ${total}`)).toBeInTheDocument();
-  });
-
-  test("muestra loading inicialmente", () => {
-    obtenerData.mockResolvedValue({ docs: [] });
-    render(<ListaGastos />);
-    expect(screen.getByText(/cargando gastos/i)).toBeInTheDocument();
-  });
-
-  test("muestra lista de gastos correctamente", async () => {
-    const mockGastos = {
-      docs: [
-        { id: "1", data: () => ({ descripcion: "Gasto 1", monto: 100 }) },
-        { id: "2", data: () => ({ descripcion: "Gasto 2", monto: 200 }) },
-      ],
-    };
-
-    obtenerData.mockResolvedValue(mockGastos);
-
-    render(<ListaGastos />);
-
-    await waitFor(() => {
-      expect(screen.getByText("Gasto 1")).toBeInTheDocument();
-      expect(screen.getByText("Gasto 2")).toBeInTheDocument();
-      expect(screen.getByText(/total: \$300\.00/i)).toBeInTheDocument();
-    });
-  });
-
-  test("elimina un gasto al hacer click en eliminar", async () => {
-    const mockGastos = {
-      docs: [{ id: "1", data: () => ({ descripcion: "Gasto 1", monto: 100 }) }],
-    };
-
-    obtenerData.mockResolvedValue(mockGastos);
-    eliminarGasto.mockResolvedValue({});
-    window.confirm = jest.fn(() => true);
-
-    render(<ListaGastos />);
-
-    await waitFor(() => {
-      expect(screen.getByText("Gasto 1")).toBeInTheDocument();
-    });
-
-    const btnEliminar = screen.getByText(/eliminar/i);
-    fireEvent.click(btnEliminar);
-
-    await waitFor(() => {
-      expect(eliminarGasto).toHaveBeenCalledWith("1");
-    });
+  test("Muestra mensaje cuando no hay gastos",()=>{
+    obtenerGastos.mockReturnValue([]);
+    render(<ListaGastos refresh={0} />);
+    expect(screen.getByText("No hay gastos registrados")).toBeInTheDocument();
   });
 });
+
+
+//Flujo de test de integración agregar gasto, vargar en la lista, verificar que se cargo correctamente, eliminarlo y verificar que se elimino
+

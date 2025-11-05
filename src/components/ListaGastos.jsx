@@ -1,61 +1,25 @@
 import { useState, useEffect } from "react";
-import { obtenerData, eliminarGasto } from "../services";
+import { obtenerGastos, eliminarGasto } from "../services";
 import "./ListaGastos.css";
 
 function ListaGastos({ refresh }) {
   const [gastos, setGastos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
-  const cargarGastos = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await obtenerData();
-
-      if (data && data.docs) {
-        const gastosArray = data.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setGastos(gastosArray);
-      } else {
-        setGastos([]);
-      }
-    } catch (err) {
-      console.error("Error al cargar gastos:", err);
-      setError(
-        "Error al cargar los gastos. Verifica los permisos de Firebase."
-      );
-      setGastos([]);
-    } finally {
-      setLoading(false);
-    }
+  const cargarGastos = () => {
+    const data = obtenerGastos();
+    setGastos(data);
   };
 
   useEffect(() => {
     cargarGastos();
   }, [refresh]);
 
-  const handleEliminar = async (id) => {
+  const handleEliminar = (id) => {
     if (window.confirm("¿Estás seguro de eliminar este gasto?")) {
-      try {
-        await eliminarGasto(id);
-        cargarGastos();
-      } catch (err) {
-        console.error("Error al eliminar:", err);
-        alert("Error al eliminar el gasto");
-      }
+      eliminarGasto(id);
+      cargarGastos();
     }
   };
-
-  if (loading) {
-    return <div className="loading">Cargando gastos...</div>;
-  }
-
-  if (error) {
-    return <div className="error">{error}</div>;
-  }
 
   const total = gastos.reduce((sum, gasto) => sum + (gasto.monto || 0), 0);
 

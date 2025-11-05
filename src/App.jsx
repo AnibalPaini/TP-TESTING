@@ -13,8 +13,10 @@ function App() {
   return (
     <div className="App">
       <h1>Gestor de Gastos</h1>
-      <Form onGastoAgregado={handleGastoAgregado} />
-      <ListaGastos refresh={refresh} />
+      <div className="contenedor-app">
+        <Form onGastoAgregado={handleGastoAgregado} />
+        <ListaGastos refresh={refresh} />
+      </div>
     </div>
   );
 }

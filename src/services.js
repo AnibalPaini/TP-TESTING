@@ -1,39 +1,28 @@
-import { db } from "../src/firestore";
-import {
-  collection,
-  getDocs,
-  addDoc,
-  deleteDoc,
-  doc,
-} from "firebase/firestore";
+// Arreglo en memoria para almacenar los gastos
+let gastos = [];
+let nextId = 1;
 
-export const obtenerData = async () => {
-  try {
-    const data = await getDocs(collection(db, "gastos"));
-    return data;
-  } catch (error) {
-    console.error("Error fetching documents: ", error);
-    return { docs: [] }; // Retornar objeto vacío en caso de error
-  }
+// Obtener todos los gastos
+export const obtenerGastos = () => {
+  return [...gastos]; // Retorna una copia del arreglo
 };
 
-export const agregarGasto = async (gasto) => {
-  try {
-    const docRef = await addDoc(collection(db, "gastos"), gasto);
-    console.log("Document written with ID: ", docRef.id);
-    return docRef;
-  } catch (e) {
-    console.error("Error adding document: ", e);
-    throw e;
-  }
+// Agregar un nuevo gasto
+export const agregarGasto = (gasto) => {
+  const nuevoGasto = {
+    id: nextId++,
+    ...gasto,
+  };
+  gastos.push(nuevoGasto);
+  return nuevoGasto;
 };
 
-export const eliminarGasto = async (id) => {
-  try {
-    await deleteDoc(doc(db, "gastos", id));
-    console.log("Document deleted with ID: ", id);
-  } catch (error) {
-    console.error("Error deleting document: ", error);
-    throw error;
+// Eliminar un gasto por ID
+export const eliminarGasto = (id) => {
+  const index = gastos.findIndex((g) => g.id === id);
+  if (index !== -1) {
+    gastos.splice(index, 1);
+    return true;
   }
+  return false;
 };
