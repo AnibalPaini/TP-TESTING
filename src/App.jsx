@@ -1,27 +1,22 @@
-import React, { useEffect, useState } from "react";
-import Form from "./components/Form.jsx";
-import ListaGastos from "./components/ListaGastos.jsx";
+import { useState } from "react";
+import Form from "./components/Form";
+import ListaGastos from "./components/ListaGastos";
+import "./App.css";
 
-const App = () => {
-  const [gastos, setGastos] = useState([]);
+function App() {
+  const [refresh, setRefresh] = useState(0);
 
-  useEffect(() => {
-    const datos = JSON.parse(localStorage.getItem("gastos"));
-    setGastos(datos);
-  }, []);
-
-  const handleAddGasto = (gasto) => {
-    const next = [...gastos, gasto];
-    setGastos(next);
-    localStorage.setItem("gastos", JSON.stringify(next));
+  const handleGastoAgregado = () => {
+    setRefresh((prev) => prev + 1);
   };
 
   return (
-    <div>
-      <Form onAdd={handleAddGasto} />
-      <ListaGastos gastos={gastos} />
+    <div className="App">
+      <h1>Gestor de Gastos</h1>
+      <Form onGastoAgregado={handleGastoAgregado} />
+      <ListaGastos refresh={refresh} />
     </div>
   );
-};
+}
 
 export default App;

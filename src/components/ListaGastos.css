@@ -70,3 +70,44 @@
   outline: 2px solid rgba(59, 130, 246, 0.2);
   outline-offset: 2px;
 }
+
+.btn-eliminar {
+  background-color: #ff4444;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+}
+
+.btn-eliminar:hover {
+  background-color: #cc0000;
+}
+
+.total {
+  margin-top: 20px;
+  font-size: 18px;
+  text-align: right;
+  padding: 10px;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+}
+
+.error {
+  color: #d32f2f;
+  background-color: #ffebee;
+  padding: 15px;
+  border-radius: 4px;
+  margin: 20px 0;
+  text-align: center;
+  border: 1px solid #ef5350;
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+  font-size: 16px;
+  color: #666;
+}
