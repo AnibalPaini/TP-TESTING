@@ -9,7 +9,6 @@ import { agregarGasto, obtenerGastos } from "../services";
 jest.mock("../services");
 
 describe("Form Component - Tests Básicos", () => {
-
   test("no envía el formulario si descripción está vacía", () => {
     agregarGasto.mockImplementation(() => {});
     const mockCallback = jest.fn();
@@ -17,7 +16,9 @@ describe("Form Component - Tests Básicos", () => {
     render(<Form onGastoAgregado={mockCallback} />);
 
     // Solo llenar monto, dejar descripción vacía
-    fireEvent.change(screen.getByLabelText("Monto:"), { target: { value: "100" } });
+    fireEvent.change(screen.getByLabelText("Monto:"), {
+      target: { value: "100" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Agregar Gasto" }));
 
     // No debe llamar a agregarGasto ni al callback
@@ -25,7 +26,9 @@ describe("Form Component - Tests Básicos", () => {
     expect(mockCallback).not.toHaveBeenCalled();
 
     //Se muestra el mensaje de error
-    expect(screen.getByText("Por favor, complete todos los campos.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Por favor, complete todos los campos.")
+    ).toBeInTheDocument();
   });
 
   test("carga correctamente los datos del formulario", () => {
@@ -59,8 +62,7 @@ describe("Form Component - Tests Básicos", () => {
 });
 
 describe("ListaGastos Component - Test de grabación", () => {
-
-  test("Cargo un gasto y se renderiza",()=>{
+  test("Cargo un gasto y se renderiza", () => {
     const gastoGuardado = {
       id: 1,
       descripcion: "Café",
@@ -71,15 +73,33 @@ describe("ListaGastos Component - Test de grabación", () => {
     render(<ListaGastos refresh={0} />);
     expect(screen.getByText("Café")).toBeInTheDocument();
     expect(screen.getByText("$50.00")).toBeInTheDocument();
-  })
+  });
 
-  test("Muestra mensaje cuando no hay gastos",()=>{
+  test("Muestra mensaje cuando no hay gastos", () => {
     obtenerGastos.mockReturnValue([]);
     render(<ListaGastos refresh={0} />);
     expect(screen.getByText("No hay gastos registrados")).toBeInTheDocument();
   });
+
+  test("Cargo un gasto y se renderiza", () => {
+    const gastoGuardado = [
+      {
+        id: 1,
+        descripcion: "Café",
+        monto: 50,
+        fecha: new Date().toISOString(),
+      },
+      {
+        id: 2,
+        descripcion: "Comida",
+        monto: 150,
+        fecha: new Date().toISOString(),
+      },
+    ];
+    obtenerGastos.mockReturnValue(gastoGuardado);
+    render(<ListaGastos refresh={0} />);
+    expect(screen.getByText("Total: $200.00")).toBeInTheDocument();
+  });
 });
 
-
 //Flujo de test de integración agregar gasto, vargar en la lista, verificar que se cargo correctamente, eliminarlo y verificar que se elimino
-
