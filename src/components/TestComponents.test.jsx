@@ -103,3 +103,37 @@ describe("ListaGastos Component - Test de grabación", () => {
 });
 
 //Flujo de test de integración agregar gasto, vargar en la lista, verificar que se cargo correctamente, eliminarlo y verificar que se elimino
+describe("Flujo de integración - Agregar, Mostrar y Eliminar Gasto", () => {
+  test("Flujo completo: agregar gasto, verificar que aparece, eliminarlo y verificar que desapareció", () => {
+    const { rerender } = render(<ListaGastos refresh={0} />);
+
+    //elimino datos anteriores
+    obtenerGastos.mockReturnValue([]);
+    rerender(<ListaGastos refresh={1} />);
+    expect(screen.getByText("No hay gastos registrados")).toBeInTheDocument();
+
+    // agregamos gasto
+    const gastoAgregado = {
+      id: 1,
+      descripcion: "Café",
+      monto: 50,
+      fecha: new Date().toISOString(),
+    };
+    obtenerGastos.mockReturnValue([gastoAgregado]);
+    rerender(<ListaGastos refresh={2} />);
+
+    // verifico que este en la tabla
+    expect(screen.getByText("Café")).toBeInTheDocument();
+    expect(screen.getByText("$50.00")).toBeInTheDocument();
+    expect(screen.getByText("Total: $50.00")).toBeInTheDocument();
+
+    // lo eliminamos
+    fireEvent.click(screen.getByRole("button", { name: "Eliminar" }));
+    obtenerGastos.mockReturnValue([]);
+    rerender(<ListaGastos refresh={3} />);
+
+    // verifico que ya no está
+    expect(screen.queryByText("Café")).not.toBeInTheDocument();
+    expect(screen.getByText("No hay gastos registrados")).toBeInTheDocument();
+  });
+});
